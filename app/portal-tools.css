@@ -8,3 +8,5 @@
 @media(prefers-reduced-motion:reduce){.side{transition:none}}
 
 @media(max-width:850px){.hero .white{display:inline-flex;justify-self:start;margin-top:8px}.res article{flex-wrap:wrap}.res article div{min-width:140px}.lost article div{min-width:0;overflow-wrap:anywhere}.toast{max-width:calc(100vw - 24px);width:max-content;bottom:48px;line-height:1.6}}
+
+.cards .service-main>i svg{position:static;color:#159573;width:21px;height:21px}.cards .service-main>svg{right:12px;bottom:12px}.cards .service-main span{padding-right:12px}
