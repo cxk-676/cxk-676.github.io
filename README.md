@@ -37,7 +37,7 @@ npm run build:pages
 需要 Node.js 22 或更高版本：
 
 ```bash
-npm ci
+npm install
 npm run dev
 ```
 
