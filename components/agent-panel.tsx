@@ -1,0 +1,18 @@
+"use client";
+
+import { useState } from "react";
+import { Bot, Check, ChevronRight, Search, X } from "lucide-react";
+import { getOfficialAnswer } from "../lib/official-knowledge";
+import { buildSearchUrl } from "../lib/campus-services";
+import { agentScenes, resolveAgentScene, type AgentSceneId } from "../lib/agent-skills";
+
+type Props = { initialScene: string; close: () => void; go: (view: "classroom" | "library" | "dining") => void };
+
+export function AgentPanel({ initialScene, close, go }: Props) {
+  const [input, setInput] = useState(initialScene ? agentScenes[initialScene as AgentSceneId]?.request ?? "" : "");
+  const [official,setOfficial]=useState(()=>getOfficialAnswer(initialScene));
+  const [scene, setScene] = useState(() => initialScene ? resolveAgentScene(initialScene) : null);
+  const run = () => {setOfficial(getOfficialAnswer(input));setScene(resolveAgentScene(input));};
+  const target = scene?.id === "study" ? "classroom" : scene?.id === "lunch" ? "dining" : "library";
+  return <div className="agent" role="dialog" aria-modal="true" aria-label="校园 AI 助手" onKeyDown={event=>{if(event.key==="Escape")close();}}><section><header><span><i><Bot size={17}/></i><b>校园 AI 助手<small>官方资料索引 + 场景演示 · 非大模型实时回答</small></b></span><button onClick={close} aria-label="关闭 AI 助手"><X/></button></header><div className="agentbody"><div className="agent-input"><Search size={16}/><input autoFocus aria-label="助手问题" value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => event.key === "Enter" && run()} placeholder="例如：今晚找安静教室自习"/><button className="primary" onClick={run}>执行</button></div>{official ? <article className="answer official-answer"><label>已核实公开资料 · 不读取校内账号</label><h3>{official.title}</h3><ol>{official.steps.map(step=><li key={step}>{step}</li>)}</ol><a href={official.source} target="_blank" rel="noopener noreferrer">来源：{official.sourceTitle} ↗</a><p>核对日期：{official.checked} · 以最新校方指引为准</p><a href={buildSearchUrl(input,'campus')!} target="_blank" rel="noopener noreferrer">继续检索最新官方信息 ↗</a><div className="summary"><b>Skill：官方资料查找</b><p>输入：{input} · 状态：已匹配来源</p></div></article> : !scene ? <div className="agentempty"><h2>我可以帮你安排校园生活</h2><button onClick={()=>{setInput("怎么申请在读证明");setOfficial(getOfficialAnswer("在读证明"));}}>证明办理指南 · 官方资料</button><button onClick={()=>{setInput("校外怎么访问图书馆数据库");setOfficial(getOfficialAnswer("校外图书馆数据库"));}}>校外访问图书馆 · 官方资料</button><button onClick={() => { setInput(agentScenes.study.request); setScene(agentScenes.study); }}>晚间自习</button><button onClick={() => { setInput(agentScenes.lunch.request); setScene(agentScenes.lunch); }}>午餐安排</button><button onClick={() => { setInput(agentScenes.library.request); setScene(agentScenes.library); }}>图书馆学习</button></div> : <><p className="bubble">{scene.request}</p>{scene.skills.length > 0 ? <div className="steps">{scene.skills.map((skill, index) => <article key={skill.id}><i>{index + 1}</i><div><b>{skill.name}</b><small>{skill.purpose} · 参数：{skill.params} · 已完成</small></div><Check size={16}/></article>)}</div> : null}<div className="summary"><b>Skill 执行摘要</b><p>{scene.skills.length ? scene.skills.map((skill) => skill.name).join("、") : "未调用技能"}</p><code>输入：{input || "无"}</code></div><article className="answer"><label>{scene.id === "unknown" ? "可用服务" : "已完成"}</label><h3>{scene.result}</h3><p>{scene.details}</p>{scene.id === "unknown" && <a href={buildSearchUrl(input,'campus')||'https://www.cdut.edu.cn/xs.htm'} target="_blank" rel="noopener noreferrer">检索最新官方信息 ↗</a>}{scene.id !== "unknown" && <button className="primary" onClick={() => { go(target); close(); }}>查看结果 <ChevronRight size={15}/></button>}</article></>}</div></section></div>;
+}
